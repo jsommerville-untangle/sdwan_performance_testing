@@ -1,0 +1,29 @@
+# We can probably push a slimmer image with what we need, for now we are using buster slim
+FROM debian:buster-slim
+
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Use contrib non-free for netperf (this only works on stretch and earlier for now)
+#RUN sed -i '/^\([^#].*main\)/s/main/& contrib non-free/' /etc/apt/sources.list
+# Install netperf (only available in stretch non-free)
+#RUN apt-get install -y netperf
+
+RUN apt update -q
+
+# Netperf build from source dependencies
+RUN apt install -y git autotools-dev autoconf automake texinfo build-essential
+
+# For now pull netperf from github
+RUN mkdir /home/src/
+RUN cd /home/src/ && git clone https://github.com/HewlettPackard/netperf.git && cd /home/src/netperf
+
+# Build netperf
+WORKDIR /home/src/netperf
+RUN ./autogen.sh
+RUN ./configure --enable-demo
+RUN make
+RUN make install
+EXPOSE 12865
+# Startup netserver to listen for connections
+CMD ["netserver", "-D"]

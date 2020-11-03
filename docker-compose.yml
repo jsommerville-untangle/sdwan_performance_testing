@@ -1,0 +1,32 @@
+version: '3.3'
+services:
+    flent-server:
+        build:
+            context: .
+            dockerfile: Dockerfile.flent-server
+        networks:
+            server-bridge-net:
+                ipv4_address: 172.50.0.5
+        # Expose the netserver port on the host
+        ports: 
+          - "12865:12865"
+    flent-client:
+        build:
+            context: .
+            dockerfile: Dockerfile.flent-client
+        networks:
+            client-bridge-net:
+                ipv4_address: 172.52.0.5
+networks:
+    server-bridge-net:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+            - subnet: 172.50.0.0/16
+    client-bridge-net:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+            - subnet: 172.52.0.0/16
