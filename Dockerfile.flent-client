@@ -36,7 +36,7 @@ WORKDIR /home/netperf-results
 # Test flent before running script
 RUN flent --version
 
-COPY flent-server-location /tmp/
+COPY perf-server-location /tmp/
 COPY client-tests.sh /usr/bin/
 
 # Ideally this should just run the client tests and quit

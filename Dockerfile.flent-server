@@ -26,6 +26,8 @@ EXPOSE 12865
 EXPOSE 12865/udp
 EXPOSE 12866
 EXPOSE 12866/udp
+EXPOSE 2112
+EXPOSE 2112/udp
 
 # Startup netserver to listen for connections
 CMD ["netserver", "-d", "-D"]

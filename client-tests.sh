@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NETPERF_SERV=$(</tmp/flent-server-location)
+NETPERF_SERV=$(</tmp/perf-server-location)
 
 flent rrul -v -p all_scaled -L 60 -H $NETPERF_SERV -o rrul_all_scaled.png
 flent tcp_1up -v -p totals -L 60 -H $NETPERF_SERV -o tcp_up_totals.png

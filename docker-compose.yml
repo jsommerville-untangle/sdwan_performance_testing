@@ -1,6 +1,6 @@
 version: '3.3'
 services:
-    flent-server:
+    perf-server:
         build:
             context: .
             dockerfile: Dockerfile.flent-server
@@ -8,7 +8,9 @@ services:
         ports: 
             - "12865-12866:12865-12866/tcp"
             - "12865-12866:12865-12866/udp"
-    flent-client:
+            - "2112:2112/tcp"
+            - "2112:2112/udp"
+    perf-client:
         build:
             context: .
             dockerfile: Dockerfile.flent-client
