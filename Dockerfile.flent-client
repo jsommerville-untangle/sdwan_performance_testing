@@ -13,11 +13,12 @@ RUN apt update -q
 RUN apt install -y flent
 
 # Netperf build from source dependencies
-RUN apt install -y git autotools-dev autoconf automake texinfo build-essential
+RUN apt install -y git autotools-dev autoconf automake texinfo build-essential iputils-ping iperf3 bsdmainutils
 
 # For now pull netperf from github
 RUN mkdir /home/src/
 RUN cd /home/src/ && git clone https://github.com/HewlettPackard/netperf.git && cd /home/src/netperf
+#RUN cd /home/src/ && git clone https://github.com/tohojo/flent.git && cd /home/src/flent
 
 # Build netperf
 WORKDIR /home/src/netperf
@@ -31,5 +32,11 @@ RUN mkdir /home/netperf-results && cd /home/netperf-results
 
 WORKDIR /home/netperf-results
 
-# Test flent with public server
-RUN flent rrul -p all_scaled -l 60 -H netperf.bufferbloat.net -o pub_server_rrul_test.png
+# Test flent before running script
+RUN flent --version
+
+COPY flent-server-location /tmp/
+COPY client-tests.sh /usr/bin/
+
+# Ideally this should just run the client tests and quit
+ENTRYPOINT ["client-tests.sh"]
