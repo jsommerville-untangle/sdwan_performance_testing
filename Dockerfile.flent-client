@@ -17,15 +17,16 @@ RUN apt install -y git autotools-dev autoconf automake texinfo build-essential i
 
 # For now pull netperf from github
 RUN mkdir /home/src/
-RUN cd /home/src/ && git clone https://github.com/HewlettPackard/netperf.git && cd /home/src/netperf
-#RUN cd /home/src/ && git clone https://github.com/tohojo/flent.git && cd /home/src/flent
+# Clone netperf from github
+RUN git clone https://github.com/HewlettPackard/netperf.git
 
-# Build netperf
-WORKDIR /home/src/netperf
-RUN ./autogen.sh
-RUN ./configure --enable-demo
-RUN make
-RUN make install
+# Configure make install
+RUN cd netperf && \
+    ./autogen.sh && \
+    ./configure --enable-demo && \
+    make && make install
+
+
 
 # Create test directories (Mount these as volumedir from host)
 RUN mkdir /home/netperf-results && cd /home/netperf-results
