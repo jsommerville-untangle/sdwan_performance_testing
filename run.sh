@@ -57,6 +57,9 @@ docker context create flent_remote_client --docker "host=ssh://$REMOTE_CLIENT_US
 docker context use flent_remote_server
 docker context use flent_remote_client
 
+#Build flent-server-loc file to use in client docker container
+echo $REMOTE_SERVER > flent-server-location
+
 # Call compose with the context of the server and client, using the appropriate builds
 docker-compose -f docker-compose.yml --context flent_remote_server up -d --build flent-server
 docker-compose -f docker-compose.yml --context flent_remote_client up --build flent-client
