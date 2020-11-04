@@ -1,29 +1,31 @@
-# We can probably push a slimmer image with what we need, for now we are using buster slim
-FROM debian:buster-slim
+FROM alpine:3.12
 
-USER root
-ENV DEBIAN_FRONTEND=noninteractive
+# install some dependencies
+RUN apk add --update curl build-base bash
 
-# Use contrib non-free for netperf (this only works on stretch and earlier for now)
-#RUN sed -i '/^\([^#].*main\)/s/main/& contrib non-free/' /etc/apt/sources.list
-# Install netperf (only available in stretch non-free)
-#RUN apt-get install -y netperf
+# Grab netperf 2.7 from HP github
+RUN curl -LO https://github.com/HewlettPackard/netperf/archive/netperf-2.7.0.tar.gz
 
-RUN apt update -q
+# Unpack and cd
+RUN tar -xzf netperf-2.7.0.tar.gz
 
-# Netperf build from source dependencies
-RUN apt install -y git autotools-dev autoconf automake texinfo build-essential
+# Configure make install
+RUN cd netperf-netperf-2.7.0 && \
+    ./configure --prefix=/usr && \
+    make && \
+    make install
 
-# For now pull netperf from github
-RUN mkdir /home/src/
-RUN cd /home/src/ && git clone https://github.com/HewlettPackard/netperf.git && cd /home/src/netperf
+# Cleanup
+RUN rm -rf netperf-2.7.0 netperf-2.7.0.tar.gz && \
+	rm -f /usr/share/info/netperf.info && \
+	strip -s /usr/bin/netperf /usr/bin/netserver && \
+	apk del build-base && rm -rf /var/cache/apk/*
 
-# Build netperf
-WORKDIR /home/src/netperf
-RUN ./autogen.sh
-RUN ./configure --enable-demo
-RUN make
-RUN make install
+# Declare the expose ports for the image
 EXPOSE 12865
+EXPOSE 12865/udp
+EXPOSE 12866
+EXPOSE 12866/udp
+
 # Startup netserver to listen for connections
-CMD ["netserver", "-D"]
+CMD ["netserver", "-d", "-D"]
