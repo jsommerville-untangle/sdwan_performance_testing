@@ -37,7 +37,7 @@ WORKDIR /home/netperf-results
 RUN flent --version
 
 COPY perf-server-location /tmp/
-COPY client-tests.sh /usr/bin/
+COPY testing-scripts/* /usr/bin/
 
 # Ideally this should just run the client tests and quit
 ENTRYPOINT ["client-tests.sh"]
