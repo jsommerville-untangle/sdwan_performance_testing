@@ -14,3 +14,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.flent-client
+    perf-results:
+        build:
+            context: .
+            dockerfile: Dockerfile.perf-results
