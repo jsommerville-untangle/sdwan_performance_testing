@@ -4,6 +4,8 @@
 #
 /bin/bash setup-ssh.sh
 
-/bin/bash flent-tests.sh
+NOW=$(date +"%s_%m_%d_%y")
 
-/bin/bash upload-results.sh
+/bin/bash flent-tests.sh $NOW
+
+/bin/bash upload-results.sh $NOW
