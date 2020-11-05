@@ -107,7 +107,8 @@ then
     scp -P $RESULTS_SERVER_PORT /tmp/id_perf*  $RESULTS_SERVER_USER@$RESULTS_SERVER:/tmp/
     docker context use perf_results_server
     echo "Deploying results server..."
-    docker-compose -f docker-compose.yml --context perf_results_server --env-file .env.results up -d --build perf-results
+    docker-compose -f docker-compose.yml --context perf_results_server --env-file .env.results up -d --build perf-results-sshd
+    docker-compose -f docker-compose.yml --context perf_results_server --env-file .env.results up -d --build perf-results-nginx
     docker context rm perf_results_server
 fi
 

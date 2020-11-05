@@ -1,0 +1,14 @@
+FROM nginx:alpine
+# Setup NGINX for displaying perf results
+# Remove default page
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy results conf into nginx config location
+COPY nginx/results.conf /etc/nginx/conf.d/
+
+# Copy up results script
+#COPY nginx/results-startup.sh /docker-entrypoint.d/
+
+#EXPOSE 80
+
+#CMD ["/usr/bin/results-startup.sh"]

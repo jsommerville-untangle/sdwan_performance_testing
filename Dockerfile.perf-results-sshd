@@ -1,4 +1,4 @@
-FROM nginx:1.19.3-alpine
+FROM alpine
 
 RUN apk add --update openssh bash rsync
 
@@ -30,9 +30,4 @@ RUN cat /root/.ssh/id_perf.pub>/root/.ssh/authorized_keys \
     && chmod 600 ~/.ssh/authorized_keys
 
 EXPOSE 22
-CMD ["/usr/sbin/sshd","-D"]
-
-# Setup NGINX for displaying perf results
-#
-#
-
+CMD ["/usr/sbin/sshd", "-D"]
