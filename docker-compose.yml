@@ -3,7 +3,7 @@ services:
     perf-server:
         build:
             context: .
-            dockerfile: Dockerfile.flent-server
+            dockerfile: Dockerfile.perf-server
         # Expose the netserver port on the host
         ports: 
             - "12865-12866:12865-12866/tcp"
@@ -21,7 +21,7 @@ services:
     perf-client:
         build:
             context: .
-            dockerfile: Dockerfile.flent-client
+            dockerfile: Dockerfile.perf-client
         env_file:
             - .env.client
     perf-results:
