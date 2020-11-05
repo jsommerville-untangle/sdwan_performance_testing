@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 #RUN apt-get install -y netperf
 
 RUN apt update -q
-RUN apt install -y flent
+RUN apt install -y flent rsync
 
 # Netperf build from source dependencies
 RUN apt install -y git autotools-dev autoconf automake texinfo build-essential iputils-ping iperf3 bsdmainutils
@@ -33,6 +33,16 @@ RUN mkdir /home/netperf-results && cd /home/netperf-results
 
 WORKDIR /home/netperf-results
 
+# This is pretty insecure (docker history can pull keys out)
+# find a better way to get this to communicate with the result server? 
+# IE: Mount .ssh volumes into each and share keys manually
+RUN mkdir -p /root/.ssh \
+    && chown -R root:root /root/.ssh
+
+COPY id_perf* /root/.ssh/
+COPY testing-scripts/* /usr/bin/
+
+RUN chmod -R 600 /root/.ssh/
 # Test flent before running script
 RUN flent --version
 

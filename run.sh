@@ -78,10 +78,17 @@ touch .env.results
 touch .env.client
 touch .env.server
 
+
+# Generate a keypair in tmp for Results and Client to communicate
+ssh-keygen -q -t ed25519 -N '' -f ./id_perf <<< ""$'\n'"y" 2>&1 >/dev/null
+
 # Create Env files before setting up containers
 if [ -n "$RESULTS_SERVER" ]
 then
-    echo RES_SRV=$RESULTS_SERVER>>.env.results
+    echo RES_SRV=$RESULTS_SERVER>>.env.client
+    echo RES_SSH_PORT=13474>>.env.results
+    echo RES_SSH_PORT=13474>>.env.client
+    echo RES_SSH_USER=root>>.env.client
 fi
 
 if [ -n "$REMOTE_SERVER" ]
@@ -89,9 +96,19 @@ then
     echo PERF_SRV=$REMOTE_SERVER>>.env.results
     echo PERF_SRV=$REMOTE_SERVER>>.env.client
 fi
+
+echo PERF_SRV=10.11.12.195>>.env.client
+
 if [ -n "$RESULTS_SERVER" ]
 then
     echo "Setting up results server..."
+    docker context create perf_results_server --docker "host=ssh://$RESULTS_SERVER_USER@$RESULTS_SERVER:$RESULTS_SERVER_PORT"
+    # ssh the temp keys too
+    scp -P $RESULTS_SERVER_PORT /tmp/id_perf*  $RESULTS_SERVER_USER@$RESULTS_SERVER:/tmp/
+    docker context use perf_results_server
+    echo "Deploying results server..."
+    docker-compose -f docker-compose.yml --context perf_results_server --env-file .env.results up -d --build perf-results
+    docker context rm perf_results_server
 fi
 
 if [ -n "$REMOTE_SERVER" ]
@@ -100,7 +117,7 @@ then
     docker context create perf_remote_server --docker "host=ssh://$REMOTE_SERVER_USER@$REMOTE_SERVER:$REMOTE_SERVER_PORT"
     docker context use perf_remote_server
     echo "Deploying performance server..."
-    docker-compose -f docker-compose.yml --context perf_remote_server up -d --build perf-server
+    docker-compose -f docker-compose.yml --context perf_remote_server --env-file .env.server up -d --build perf-server
     docker context rm perf_remote_server
 fi
 
@@ -109,8 +126,10 @@ then
     echo "Configuring performance client..."
     docker context create perf_remote_client --docker "host=ssh://$REMOTE_CLIENT_USER@$REMOTE_CLIENT:$REMOTE_CLIENT_PORT"
     docker context use perf_remote_client
+    # ssh the temp keys too
+    scp -P $REMOTE_CLIENT_PORT /tmp/id_perf* $REMOTE_CLIENT_USER@$REMOTE_CLIENT:/tmp/
     echo "Deploying performance client..."
-    docker-compose -f docker-compose.yml --context perf_remote_client up --build perf-client
+    docker-compose -f docker-compose.yml --context perf_remote_client --env-file .env.client up --build perf-client
     docker context rm perf_remote_client
 fi
 

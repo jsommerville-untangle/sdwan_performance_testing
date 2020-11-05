@@ -1,0 +1,38 @@
+FROM nginx:1.19.3-alpine
+
+RUN apk add --update openssh bash rsync
+
+# Setup SSHD for receiving results files
+#
+# I think we should gen a special user for this, instead of letting root in
+#
+RUN sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config \
+  && echo "root:root" | chpasswd \
+  && sed -ie 's/#Port 22/Port 22/g' /etc/ssh/sshd_config \
+  && sed -ir 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config \  
+  && sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_key/HostKey \/etc\/ssh\/ssh_host_key/g' /etc/ssh/sshd_config \
+  && sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_rsa_key/HostKey \/etc\/ssh\/ssh_host_rsa_key/g' /etc/ssh/sshd_config \
+  && sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_dsa_key/HostKey \/etc\/ssh\/ssh_host_dsa_key/g' /etc/ssh/sshd_config \
+  && sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ecdsa_key/HostKey \/etc\/ssh\/ssh_host_ecdsa_key/g' /etc/ssh/sshd_config \
+  && sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ed25519_key/HostKey \/etc\/ssh\/ssh_host_ed25519_key/g' /etc/ssh/sshd_config \
+  && /usr/bin/ssh-keygen -A \
+  && ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
+
+# This is pretty insecure (docker history can pull keys out)
+# find a better way to get this to communicate with the result server? 
+# IE: Mount .ssh volumes into each and share keys manually
+RUN mkdir -p /root/.ssh \
+    && chown -R root:root /root/.ssh
+
+COPY id_perf* /root/.ssh/
+
+RUN cat /root/.ssh/id_perf.pub>/root/.ssh/authorized_keys \
+    && chmod 600 ~/.ssh/authorized_keys
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd","-D"]
+
+# Setup NGINX for displaying perf results
+#
+#
+
