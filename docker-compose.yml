@@ -10,11 +10,17 @@ services:
             - "12865-12866:12865-12866/udp"
             - "2112:2112/tcp"
             - "2112:2112/udp"
+        env_file:
+            - .env.server
     perf-client:
         build:
             context: .
             dockerfile: Dockerfile.flent-client
+        env_file:
+            - .env.client
     perf-results:
         build:
             context: .
             dockerfile: Dockerfile.perf-results
+        env_file:
+            - .env.results

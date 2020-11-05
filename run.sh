@@ -69,6 +69,26 @@ do
     esac
 done
 
+# Cleanup the environment files before running
+rm .env.results
+rm .env.client
+rm .env.server
+
+touch .env.results
+touch .env.client
+touch .env.server
+
+# Create Env files before setting up containers
+if [ -n "$RESULTS_SERVER" ]
+then
+    echo RES_SRV=$RESULTS_SERVER>>.env.results
+fi
+
+if [ -n "$REMOTE_SERVER" ]
+then
+    echo PERF_SRV=$REMOTE_SERVER>>.env.results
+    echo PERF_SRV=$REMOTE_SERVER>>.env.client
+fi
 if [ -n "$RESULTS_SERVER" ]
 then
     echo "Setting up results server..."
@@ -82,10 +102,6 @@ then
     echo "Deploying performance server..."
     docker-compose -f docker-compose.yml --context perf_remote_server up -d --build perf-server
     docker context rm perf_remote_server
-
-    echo $REMOTE_SERVER > perf-server-location
-else
-    echo netperf-west.bufferbloat.net > perf-server-location
 fi
 
 if [ -n "$REMOTE_CLIENT" ]

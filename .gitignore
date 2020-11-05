@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 perf-server-location
+.env.*
