@@ -88,7 +88,12 @@ then
     echo RES_SRV=$RESULTS_SERVER>>.env.client
     echo RES_SSH_PORT=13474>>.env.results
     echo RES_SSH_PORT=13474>>.env.client
+    echo RES_SSH_PORT=13474>>.env.server
     echo RES_SSH_USER=root>>.env.client
+else
+    echo RES_SSH_PORT=22>>.env.results
+    echo RES_SSH_PORT=22>>.env.server
+
 fi
 
 if [ -n "$REMOTE_SERVER" ]
