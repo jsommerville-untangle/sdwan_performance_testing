@@ -43,10 +43,9 @@ COPY id_perf* /root/.ssh/
 COPY testing-scripts/* /usr/bin/
 
 RUN chmod -R 600 /root/.ssh/
+
 # Test flent before running script
 RUN flent --version
 
-COPY testing-scripts/* /usr/bin/
-
 # Ideally this should just run the client tests and quit
-ENTRYPOINT ["client-tests.sh"]
+CMD ["entry.sh"]

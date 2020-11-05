@@ -8,6 +8,12 @@ services:
         ports: 
             - "12865-12866:12865-12866/tcp"
             - "12865-12866:12865-12866/udp"
+            - "34921:34921/tcp"
+            - "34921:34921/udp"
+            - "41061:41061/tcp"
+            - "41061:41061/udp"
+            - "37457:37457/tcp"
+            - "37457:37457/udp"
             - "2112:2112/tcp"
             - "2112:2112/udp"
         env_file:
@@ -24,3 +30,9 @@ services:
             dockerfile: Dockerfile.perf-results
         env_file:
             - .env.results
+        # Expose Web service on 8080 and SSH on the RES_PORT
+        ports:
+            - "8080:80"
+            - "${RES_SSH_PORT}:22"
+        volumes:
+            - /data/performance-results:/data/
