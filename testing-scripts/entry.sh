@@ -4,6 +4,6 @@
 #
 /bin/bash setup-ssh.sh
 
-/bin/bash client-tests.sh
+/bin/bash flent-tests.sh
 
 /bin/bash upload-results.sh
