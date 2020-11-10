@@ -6,6 +6,8 @@
 
 NOW=$(date +"%s_%m_%d_%y")
 
+mkdir $NOW
+
 /bin/bash flent-tests.sh $NOW
 
 /bin/bash upload-results.sh $NOW
