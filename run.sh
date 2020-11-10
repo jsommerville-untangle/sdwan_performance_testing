@@ -93,16 +93,18 @@ then
 else
     echo RES_SSH_PORT=22>>.env.results
     echo RES_SSH_PORT=22>>.env.server
-
+    echo RES_SSH_PORT=22>>.env.client
 fi
 
 if [ -n "$REMOTE_SERVER" ]
 then
     echo PERF_SRV=$REMOTE_SERVER>>.env.results
     echo PERF_SRV=$REMOTE_SERVER>>.env.client
+    echo PERF_SRV=$REMOTE_SERVER>>.env.server
+    echo h=$REMOTE_SERVER>>.env.client
+    echo proto=TCP>>.env.client
 fi
 
-echo PERF_SRV=10.11.12.195>>.env.client
 
 if [ -n "$RESULTS_SERVER" ]
 then
@@ -114,7 +116,6 @@ then
     echo "Deploying results server..."
     docker-compose -f docker-compose.yml --context perf_results_server --env-file .env.results up -d --build perf-results-sshd
     docker-compose -f docker-compose.yml --context perf_results_server --env-file .env.results up -d --build perf-results-nginx
-    docker context rm perf_results_server
 fi
 
 if [ -n "$REMOTE_SERVER" ]
@@ -124,7 +125,6 @@ then
     docker context use perf_remote_server
     echo "Deploying performance server..."
     docker-compose -f docker-compose.yml --context perf_remote_server --env-file .env.server up -d --build perf-server
-    docker context rm perf_remote_server
 fi
 
 if [ -n "$REMOTE_CLIENT" ]
@@ -136,8 +136,10 @@ then
     scp -P $REMOTE_CLIENT_PORT /tmp/id_perf* $REMOTE_CLIENT_USER@$REMOTE_CLIENT:/tmp/
     echo "Deploying performance client..."
     docker-compose -f docker-compose.yml --context perf_remote_client --env-file .env.client up --build perf-client
-    docker context rm perf_remote_client
 fi
 
 # Set context back to default, just in case
+docker context rm perf_results_server -f
+docker context rm perf_remote_server -f
+docker context rm perf_remote_client -f
 docker context use default
