@@ -4,18 +4,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.perf-server
-        # Expose the netserver port on the host
-        ports: 
-            - "12865-12866:12865-12866/tcp"
-            - "12865-12866:12865-12866/udp"
-            - "34921:34921/tcp"
-            - "34921:34921/udp"
-            - "41061:41061/tcp"
-            - "41061:41061/udp"
-            - "37457:37457/tcp"
-            - "37457:37457/udp"
-            - "2112:2112/tcp"
-            - "2112:2112/udp"
+        network_mode: host
         env_file:
             - .env.server
     perf-client:
