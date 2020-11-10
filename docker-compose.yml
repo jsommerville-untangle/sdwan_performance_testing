@@ -6,19 +6,19 @@ services:
             dockerfile: Dockerfile.perf-server
         network_mode: host
         env_file:
-            - .env.server
+            - .env
     perf-client:
         build:
             context: .
             dockerfile: Dockerfile.perf-client
         env_file:
-            - .env.client
+            - .env
     perf-results-sshd:
         build:
             context: .
             dockerfile: Dockerfile.perf-results-sshd
         env_file:
-            - .env.results
+            - .env
         # Expose Web service on 8080 and SSH on the RES_PORT
         ports:
             - "${RES_SSH_PORT}:22"
@@ -29,7 +29,7 @@ services:
             context: .
             dockerfile: Dockerfile.perf-results-nginx
         env_file:
-            - .env.results
+            - .env
         # Expose Web service on 8080 and SSH on the RES_PORT
         ports:
             - "8080:80"
