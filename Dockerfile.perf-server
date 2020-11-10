@@ -1,33 +1,24 @@
 FROM alpine:3.12
 
 # install some dependencies
-RUN apk add --update curl build-base bash
+RUN apk add --update curl build-base bash automake autoconf git lksctp-tools-dev linux-headers
 
-# Grab netperf 2.7 from HP github
-RUN curl -LO https://github.com/HewlettPackard/netperf/archive/netperf-2.7.0.tar.gz
+# Grab netperf master from HP github
 
-# Unpack and cd
-RUN tar -xzf netperf-2.7.0.tar.gz
+RUN git clone https://github.com/HewlettPackard/netperf.git
 
 # Configure make install
-RUN cd netperf-netperf-2.7.0 && \
+RUN cd netperf && \
+    ./autogen.sh && \
     ./configure --prefix=/usr && \
     make && \
     make install
 
 # Cleanup
-RUN rm -rf netperf-2.7.0 netperf-2.7.0.tar.gz && \
+RUN rm -rf netperf && \
 	rm -f /usr/share/info/netperf.info && \
 	strip -s /usr/bin/netperf /usr/bin/netserver && \
-	apk del build-base && rm -rf /var/cache/apk/*
+	apk del build-base automake autoconf git linux-headers && rm -rf /var/cache/apk/*
 
-# Declare the expose ports for the image
-EXPOSE 12865
-EXPOSE 12865/udp
-EXPOSE 12866
-EXPOSE 12866/udp
-EXPOSE 2112
-EXPOSE 2112/udp
-
-# Startup netserver to listen for connections
+# Startup netserver to listen for connections (debugging is enabled)
 CMD ["netserver", "-d", "-D"]
