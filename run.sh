@@ -95,8 +95,6 @@ if [ -n "$RESULTS_SERVER" ]
 then
     echo "Setting up results server..."
     docker context create perf_results_server --docker "host=ssh://$RESULTS_SERVER_USER@$RESULTS_SERVER:$RESULTS_SERVER_PORT"
-    # ssh the temp keys too
-    scp -P $RESULTS_SERVER_PORT /tmp/id_perf*  $RESULTS_SERVER_USER@$RESULTS_SERVER:/tmp/
     docker context use perf_results_server
     echo "Deploying results server..."
     docker-compose -f docker-compose.yml --context perf_results_server --env-file .env up -d --build perf-results-sshd
@@ -117,8 +115,6 @@ then
     echo "Configuring performance client..."
     docker context create perf_remote_client --docker "host=ssh://$REMOTE_CLIENT_USER@$REMOTE_CLIENT:$REMOTE_CLIENT_PORT"
     docker context use perf_remote_client
-    # ssh the temp keys too
-    scp -P $REMOTE_CLIENT_PORT /tmp/id_perf* $REMOTE_CLIENT_USER@$REMOTE_CLIENT:/tmp/
     echo "Deploying performance client..."
     docker-compose -f docker-compose.yml --context perf_remote_client --env-file .env up --build perf-client
 fi
