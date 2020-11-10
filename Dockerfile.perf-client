@@ -13,10 +13,11 @@ RUN apt update -q
 RUN apt install -y flent rsync
 
 # Netperf build from source dependencies
-RUN apt install -y git autotools-dev autoconf automake texinfo build-essential iputils-ping iperf3 bsdmainutils
+RUN apt install -y git autotools-dev autoconf automake texinfo build-essential iputils-ping iperf3 bsdmainutils libsctp-dev iproute2
 
 # For now pull netperf from github
 RUN mkdir /home/src/
+WORKDIR /home/src/
 # Clone netperf from github
 RUN git clone https://github.com/HewlettPackard/netperf.git
 
@@ -27,17 +28,13 @@ RUN cd netperf && \
     make && make install
 
 
-
-# Create test directories (Mount these as volumedir from host)
-RUN mkdir /home/netperf-results && cd /home/netperf-results
-
-WORKDIR /home/netperf-results
-
 # This is pretty insecure (docker history can pull keys out)
 # find a better way to get this to communicate with the result server? 
 # IE: Mount .ssh volumes into each and share keys manually
 RUN mkdir -p /root/.ssh \
     && chown -R root:root /root/.ssh
+
+WORKDIR /home/
 
 COPY id_perf* /root/.ssh/
 COPY testing-scripts/* /usr/bin/
