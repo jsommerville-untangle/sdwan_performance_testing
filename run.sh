@@ -17,6 +17,8 @@ RESULTS_SERVER=""
 RESULTS_SERVER_PORT=22
 RESULTS_SERVER_USER=root
 
+DEVICE="Unknown"
+
 for arg in "$@"
 do
     case $arg in
@@ -65,7 +67,11 @@ do
         shift
         shift
         ;;
-        
+        -d|--device)
+        DEVICE="$2"
+        shift
+        shift
+        ;;        
     esac
 done
 
@@ -75,6 +81,7 @@ rm .env
 # Generate a keypair in tmp for Results and Client to communicate
 ssh-keygen -q -t ed25519 -N '' -f ./id_perf <<< ""$'\n'"y" 2>&1 >/dev/null
 
+echo TEST_DEVICE=$DEVICE>>.env
 # Create Env files before setting up containers
 if [ -n "$RESULTS_SERVER" ]
 then

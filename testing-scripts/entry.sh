@@ -4,10 +4,12 @@
 #
 /bin/bash setup-ssh.sh
 
-NOW=$(date +"%s_%m_%d_%y")
+NOW=$(date +"%m_%d_%y_%s")
 
-mkdir $NOW
+RESULTS_DIR="${NOW}_${TEST_DEVICE}"
 
-/bin/bash flent-tests.sh $NOW
+mkdir $RESULTS_DIR
 
-/bin/bash upload-results.sh $NOW
+/bin/bash flent-tests.sh $RESULTS_DIR
+
+/bin/bash upload-results.sh $RESULTS_DIR
