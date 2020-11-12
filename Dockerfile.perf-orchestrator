@@ -28,11 +28,12 @@ WORKDIR /home/wrk/
 
 # Copy in needed files, or should we just bind mount these in?
 COPY .env .
-COPY run-tests.sh .
+COPY run-tests.sh /usr/bin/
 COPY orchestration/* ./orchestration/
 COPY testing-scripts/* ./testing-scripts/
 COPY nginx/* ./nginx/
 COPY docker-compose.yml .
 COPY Dockerfile* ./
 
-CMD ["run-tests.sh"]
+CMD ["orchestration/run-perf-testing.py"]
+ENTRYPOINT ["python3"]
