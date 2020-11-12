@@ -4,6 +4,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.perf-server
+        image: untangle/netperf-server
         network_mode: host
         env_file:
             - .env
@@ -11,12 +12,14 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.perf-client
+        image: untangle/performance-test-client
         env_file:
             - .env
     perf-results-sshd:
         build:
             context: .
             dockerfile: Dockerfile.perf-results-sshd
+        image: untangle/performance-results-sshd
         env_file:
             - .env
         # Expose Web service on 8080 and SSH on the RES_PORT
@@ -28,6 +31,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.perf-results-nginx
+        image: untangle/performance-results-nginx
         env_file:
             - .env
         # Expose Web service on 8080 and SSH on the RES_PORT
