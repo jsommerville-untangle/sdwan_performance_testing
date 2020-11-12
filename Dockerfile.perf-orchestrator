@@ -1,0 +1,38 @@
+# Can probably use a slimmer image
+FROM debian:buster-slim
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Pull in any dependencies (python3, ssh?)
+RUN apt-get update -q
+RUN apt-get install -y python3 docker curl openssh-client
+
+#RUN pip3 install docker-compose
+
+# Setup docker and compose
+RUN curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+RUN chmod +x /usr/local/bin/docker-compose
+
+# Install docker client    
+ENV DOCKER_CHANNEL stable
+ENV DOCKER_VERSION 19.03.13
+ENV DOCKER_API_VERSION 1.40
+RUN curl -fsSL "https://download.docker.com/linux/static/${DOCKER_CHANNEL}/x86_64/docker-${DOCKER_VERSION}.tgz" \
+  | tar -xzC /usr/local/bin --strip=1 docker/docker
+
+# Check compose and docker
+RUN docker --version
+RUN docker-compose --version
+
+WORKDIR /home/wrk/
+
+# Copy in needed files, or should we just bind mount these in?
+COPY .env .
+COPY run-tests.sh .
+COPY orchestration/* ./orchestration/
+COPY testing-scripts/* ./testing-scripts/
+COPY nginx/* ./nginx/
+COPY docker-compose.yml .
+COPY Dockerfile* ./
+
+CMD ["run-tests.sh"]

@@ -39,3 +39,14 @@ services:
             - "8080:80"
         volumes:
             - /data/performance-results:/data/
+    perf-results-orchestrator:
+        build:
+            context: .
+            dockerfile: Dockerfile.perf-orchestrator
+        image: untangle/performance-results-orchestrator
+        env_file:
+            - .env
+        # This container uses the local host docker sock and SSH keys
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ~/.ssh/:/root/.ssh/
