@@ -1,0 +1,27 @@
+[{
+    "imgLoc": "http://jenkins.untangle.int/job/MFW%20pipeline/job/master/351/artifact/tmp/artifacts/sdwan-espressobin-ext4_v3.0-0-g27c270a005_20201112T0917.img.gz",
+    "imgType": "Untangle-E3",
+    "imgVersion": "3.0.0",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/default_configs/e3_perf_test_defaults.json"
+},
+{
+    "imgLoc": "/images/mfw-mvebu-cortexa53-globalscale_espressobin-v7-emmc-ext4-sdcard.img.gz",
+    "imgType": "Untangle-E3",
+    "imgVersion": "2.1.0",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/default_configs/e3_perf_test_defaults.json"
+},
+{
+    "imgLoc": "https://downloads.openwrt.org/releases/19.07.4/targets/mvebu/cortexa53/openwrt-19.07.4-mvebu-cortexa53-globalscale_espressobin-v7-ext4-sdcard.img.gz",
+    "imgType": "OpenWRT-Espressobin",
+    "imgVersion": "19.07.4",
+    "configType": "Openwrt",
+    "configLocation": "orchestration/default_configs/openwrt-espressobin/*"
+},{
+    "imgLoc": "https://downloads.openwrt.org/releases/18.06.8/targets/mvebu/cortexa53/openwrt-18.06.8-mvebu-cortexa53-globalscale-espressobin-ext4-sdcard.img.gz",
+    "imgType": "OpenWRT-Espressobin",
+    "imgVersion": "18.06.8",
+    "configType": "Openwrt",
+    "configLocation": "orchestration/default_configs/openwrt-espressobin/*"
+}]
