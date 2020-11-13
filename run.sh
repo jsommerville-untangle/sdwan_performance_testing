@@ -15,6 +15,11 @@ RESULTS_SERVER=""
 RESULTS_SERVER_PORT=22
 RESULTS_SERVER_USER=root
 
+REMOTE_DEVICE=""
+REMOTE_DEVICE_PORT=22
+REMOTE_DEVICE_USER=root
+REMOTE_DEVICE_PW=passwd
+
 DEVICE="Unknown"
 
 ORCHESTRATOR=""
@@ -67,6 +72,26 @@ do
         shift
         shift
         ;;
+        -rd|--remotedevice)
+        REMOTE_DEVICE="$2"
+        shift
+        shift
+        ;;
+        -rdpw|--remotedevicepass)
+        REMOTE_DEVICE_PW="$2"
+        shift
+        shift
+        ;;
+         -rdu|--remotedeviceuser)
+        REMOTE_DEVICE_USER="$2"
+        shift
+        shift
+        ;;
+         -rdp|--remotedeviceport)
+        REMOTE_DEVICE_PORT="$2"
+        shift
+        shift
+        ;;
         -d|--device)
         DEVICE="$2"
         shift
@@ -83,10 +108,11 @@ done
 # Cleanup the environment files before running
 rm .env
 
-# Generate a keypair in tmp for Results and Client to communicate
-#ssh-keygen -q -t ed25519 -N '' -f ./id_perf <<< ""$'\n'"y" 2>&1 >/dev/null
+if [ -n "$DEVICE" ]
+then
+    echo TEST_DEVICE=$DEVICE>>.env
+fi
 
-echo TEST_DEVICE=$DEVICE>>.env
 # Create Env files before setting up containers
 if [ -n "$RESULTS_SERVER" ]
 then
@@ -116,8 +142,16 @@ then
     echo PERF_CLIENT_USER=$REMOTE_CLIENT_USER>>.env
 fi
 
+if [ -n "$REMOTE_DEVICE" ]
+then
+    echo DEVICE_ADDR=$REMOTE_DEVICE>>.env
+    echo DEVICE_PORT=$REMOTE_DEVICE_PORT>>.env
+    echo DEVICE_USER=$REMOTE_DEVICE_USER>>.env
+    echo DEVICE_PW=$REMOTE_DEVICE_PW>>.env
+fi
+
 # Let the orchestrator handle python/run script tasks, unless explicitly told not to...
-# If the orchestrator image is not passed in, then source the env file and call run-tests.sh (Typically used for one off tests)
+# If the orchestrator flag is not passed in, then source the env file and call run-tests.sh (Typically used for one off tests)
 #
 if [ -n "$ORCHESTRATOR" ]
 then

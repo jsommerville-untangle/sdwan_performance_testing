@@ -2,7 +2,6 @@
 # run-tests.sh will create the results, server, client containers and run tests
 #
 #
-ssh-keygen -q -t ed25519 -N '' -f ./id_perf <<< ""$'\n'"y" 2>&1 >/dev/null
 
 if [ -n "$RES_SRV" ]
 then

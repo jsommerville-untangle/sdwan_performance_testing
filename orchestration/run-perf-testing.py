@@ -5,6 +5,111 @@ import json
 import subprocess
 import re
 import urllib.request
+import shutil
+import hashlib
+import time
+
+def getImageFile(imageLocation):
+    """
+    getImageFile will attempt to load the supplied string value, and return the image file
+    @param string imageLocation - the image file location
+    @return the open/locked file 
+    """
+
+    tmp_file = '/tmp/current.img.gz'
+
+    # Handle HTTP URL downloads
+    if re.match('^https?.*\.img\.gz', imageLocation) is not None:
+        print("Pulling in image to /tmp ...")
+        try:
+            with urllib.request.urlopen(imageLocation) as response, open(tmp_file, 'wb') as out_file:
+                resp_read = response.read()
+                out_file.write(resp_read)
+                out_file.close()
+                print("Finished downloading %s!" % imageLocation)
+                return open(tmp_file, 'rb')
+
+        except:
+            e = sys.exc_info()[0]
+            print("Couldn't download %s because: %s" % (imageLocation, e))
+    
+    # Handle local file references
+    if re.match('^\/.*?\.img\.gz$', imageLocation) is not None:
+        print("Using %s as the /tmp/current image file" % imageLocation)
+        shutil.copyfile(imageLocation, tmp_file)
+        return open(tmp_file, 'rb')
+
+    return None
+
+def getConfigFiles(configLocation):
+    """
+    getConfigFiles will get a glob of config files after parsing the configLocation
+    @param string configLocation
+    @return glob of files
+    """
+    configs = glob.glob(configLocation)
+    return configs
+
+def uploadFiles(imageFile, configs):
+    """
+    uploadFiles will upload given image and config files to the current deviceIp/User/Pw
+    """
+    subImg = subprocess.run(["scp -i id_perf -P $DEVICE_PORT " + imageFile.name + " $DEVICE_USER@$DEVICE_ADDR:/tmp/"], shell=True)
+    if subImg.returncode != 0:
+        return False
+
+    for config in configs:
+        # Depending on config type, this may change
+        configLocation = "/etc/config/"
+
+        subConfig = subprocess.run(["scp -i id_perf -P $DEVICE_PORT " + config + " $DEVICE_USER@$DEVICE_ADDR:"+configLocation], shell=True)
+        if subConfig.returncode != 0:
+            return False
+
+    return True
+
+def startUpgrade():
+    """
+    startUpgrade will run sysupgrade on the configured device, with the current /tmp/current.img.gz file
+    """
+    sysupRun = subprocess.run(["ssh -i id_perf -p $DEVICE_PORT $DEVICE_USER@$DEVICE_ADDR 'sysupgrade /tmp/current.img.gz'"], shell=True)
+    print(sysupRun)
+
+def testConnections(device, port):
+    """
+    testConnections will try to contact the device on the passed in port in every 5s until we get a response
+    @param string device - the device to try and contact (Typically an env var)
+    @param string port - the port for connectivity (typically an env var)
+    """
+    startTime = time.time()
+
+    print("Trying to contact %s on %s, start time: %s" % (device, port, startTime))
+    while time.time() - startTime < 300:
+        time.sleep(5)
+        tryNc = subprocess.run(["nc -vz "+ device + " " + port], shell=True)
+
+        # If this is successful, we can return true since we were able to talk
+        if tryNc.returncode == 0:
+            print("Communication successful!")
+            return True
+    else:
+        print("Unable to communicate with %s on port %s..." % (device, port))
+        return False
+
+
+# Exit out if the env values are not set, can we find a way to use the SSH key for uploading to the device?? 
+deviceIp = os.environ.get('DEVICE_ADDR')
+deviceUser = os.environ.get('DEVICE_USER')
+devicePw = os.environ.get('DEVICE_PW')
+devicePort = os.environ.get('DEVICE_PORT')
+
+if deviceIp is None or deviceUser is None or devicePort is None:
+    print("Environment Variables are not set properly, DEVICE_ADDR=%s, DEVICE_USER=%s, DEVICE_PW=%s and DEVICE_PORT=%s" % (deviceIp, deviceUser, devicePw, devicePort))
+    sys.exit()
+
+# Generate keys with ssh-keygen
+print("Generating keys for remote container communication...")
+subprocess.run(['ssh-keygen -q -t ed25519 -N \'\' -f ./id_perf'], shell=True)
 
 # Parse the json configuration files
 print("Parsing supplied config files...")
@@ -43,17 +148,46 @@ with open('orchestration/default_configs/perf-test-espresso-examples.json') as t
         print("Locating image file from: %s" % test_image["imgLoc"])
         # If this is a folder path, we will use the image from that location
         # If this is a URL, then wget it into /tmp/ (this regex is pretty basic but not sure if we need to be super strict on it anyway)
-        if re.match('^https?.*\.img\.gz', test_image["imgLoc"]) is not None:
-            print("Pulling in image to /tmp ...")
-            try:
-                with urllib.request.urlopen(test_image["imgLoc"]) as response, open('/tmp/current.img.gz', 'wb') as out_file:
-                    resp_read = response.read()
-                    out_file.write(resp_read);
-                    print("Finished downloading %s!" % test_image["imgLoc"])
-            except:
-                e = sys.exc_info()[0]
-                print("Couldn't download %s because: %s" % (test_image["imgLoc"], e))
-                continue
-# For each json config item, deploy associated image config and call run.sh to execute the tests
-print("Calling subprocess run-tests.sh script...")
-subprocess.call(['run-tests.sh'], shell=True)
+        open_file = getImageFile(test_image["imgLoc"])
+        if open_file is None:
+            continue
+        print("Currently loaded img file MD5: %s" % hashlib.md5(open_file.read()).hexdigest())
+
+        print("Loading config files from: %s" % test_image["configLocation"])
+        current_configs = getConfigFiles(test_image["configLocation"])
+        if current_configs is None:
+            continue
+        print("Current config files: %s" % current_configs)
+
+        print("Uploading scp keys for orchestrator<-->device communication")
+        keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh-copy-id -i id_perf.pub $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT'], shell=True)
+        if keyUpload.returncode != 0:
+            print("An error occurred during key upload, skipping config")
+            continue
+
+        print("Upload image and configs to /tmp on device")
+        if not uploadFiles(open_file, current_configs):
+            print("An error occurred during image or config upload, skipping test configuration.")
+            continue
+
+        print("Start upgrade")
+        startUpgrade()
+
+        print("Testing connectivity to the device...")
+        if not testConnections("$DEVICE_ADDR", "$DEVICE_PORT"):
+            print("Unable to communicate with the device after flashing the image, exiting...")
+            sys.exit()
+
+        print("Testing connectivity to client...")
+        if not testConnections("$PERF_CLIENT", "$PERF_CLIENT_PORT"):
+            print("Unable to communicate with the client after flashing the image, skipping configuration...")
+            continue
+
+        print("Setting device env var...")
+        deviceName = test_image["imgType"] + "_" + test_image["imgVersion"]
+        # This sed replace will replace or insert the TEST_DEVICE environment variable, depending on what type of test we are passing in 
+        setTestDevice = subprocess.run(["sed \'/^TEST_DEVICE=/{h;s/=.*/="+deviceName+"/};${x;/^$/{s//TEST_DEVICE="+deviceName+"/;H};x}\' .env"], shell=True)
+
+        # For each json config item, deploy associated image config and call run.sh to execute the tests
+        print("Running test containers...")
+        subprocess.run(['run-tests.sh'], shell=True)

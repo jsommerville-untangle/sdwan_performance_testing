@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Pull in any dependencies (python3, ssh?)
 RUN apt-get update -q
-RUN apt-get install -y python3 docker curl openssh-client
+RUN apt-get install -y python3 docker curl openssh-client sshpass netcat
 
 #RUN pip3 install docker-compose
 

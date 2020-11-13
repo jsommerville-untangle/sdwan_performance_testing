@@ -1,0 +1,9 @@
+config redirect
+    option name 'DNAT WAN to LAN over 2244 SSH port'
+    option src  'wan'
+    option src_dport '2244'
+    option dest 'lan'
+    option dest_ip '192.168.43.179'
+    option dest_port '22'
+    option proto 'tcp'
+    option target 'DNAT'

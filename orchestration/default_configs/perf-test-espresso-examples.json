@@ -3,14 +3,14 @@
     "imgType": "Untangle-E3",
     "imgVersion": "3.0.0",
     "configType": "Untangle-SDWAN",
-    "configLocation": "orchestration/default_configs/e3_perf_test_defaults.json"
+    "configLocation": "orchestration/default_configs/e3-defaults/*"
 },
 {
     "imgLoc": "/images/mfw-mvebu-cortexa53-globalscale_espressobin-v7-emmc-ext4-sdcard.img.gz",
     "imgType": "Untangle-E3",
     "imgVersion": "2.1.0",
     "configType": "Untangle-SDWAN",
-    "configLocation": "orchestration/default_configs/e3_perf_test_defaults.json"
+    "configLocation": "orchestration/default_configs/e3-defaults/*"
 },
 {
     "imgLoc": "https://downloads.openwrt.org/releases/19.07.4/targets/mvebu/cortexa53/openwrt-19.07.4-mvebu-cortexa53-globalscale_espressobin-v7-ext4-sdcard.img.gz",
