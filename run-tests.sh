@@ -28,7 +28,7 @@ then
     docker context create perf_remote_client --docker "host=ssh://$PERF_CLIENT_USER@$PERF_CLIENT:$PERF_CLIENT_PORT"
     docker context use perf_remote_client
     echo "Deploying performance client..."
-    docker-compose -f docker-compose.yml --context perf_remote_client --env-file .env up --build perf-client
+    TEST_DEVICE=$1 docker-compose -f docker-compose.yml --context perf_remote_client --env-file .env up --build perf-client
 fi
 
 # Set context back to default, just in case

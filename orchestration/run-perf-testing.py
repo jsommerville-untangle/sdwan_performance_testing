@@ -145,49 +145,52 @@ with open('orchestration/default_configs/perf-test-espresso-examples.json') as t
             print("CONFIG ERROR: %s %s has invalid config locations for %s, skipping." % (test_image["imgType"], test_image["configType"], test_image["configLocation"]))
             continue
 
-        print("Locating image file from: %s" % test_image["imgLoc"])
+        deviceName = test_image["imgType"] + "_" + test_image["imgVersion"]
+
+        print("%s : Locating image file from: %s" % (deviceName, test_image["imgLoc"]))
         # If this is a folder path, we will use the image from that location
         # If this is a URL, then wget it into /tmp/ (this regex is pretty basic but not sure if we need to be super strict on it anyway)
         open_file = getImageFile(test_image["imgLoc"])
         if open_file is None:
             continue
-        print("Currently loaded img file MD5: %s" % hashlib.md5(open_file.read()).hexdigest())
+        print("%s : Currently loaded img file MD5: %s" % (deviceName, hashlib.md5(open_file.read()).hexdigest()))
 
-        print("Loading config files from: %s" % test_image["configLocation"])
+        print("%s : Loading config files from: %s" % (deviceName, test_image["configLocation"]))
         current_configs = getConfigFiles(test_image["configLocation"])
         if current_configs is None:
             continue
-        print("Current config files: %s" % current_configs)
+        print("%s : Current config files: %s" %  (deviceName, current_configs))
 
-        print("Uploading scp keys for orchestrator<-->device communication")
+        print("%s : Uploading scp keys for orchestrator<-->device communication" % deviceName)
         keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh-copy-id -i id_perf.pub $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT'], shell=True)
         if keyUpload.returncode != 0:
-            print("An error occurred during key upload, skipping config")
+            print("%s ERROR: An error occurred during key upload, skipping config" % deviceName)
             continue
 
-        print("Upload image and configs to /tmp on device")
+        print("%s : Upload image and configs to /tmp on device" % deviceName)
         if not uploadFiles(open_file, current_configs):
-            print("An error occurred during image or config upload, skipping test configuration.")
+            print("%s ERROR: An error occurred during image or config upload, skipping test configuration." % deviceName)
             continue
 
-        print("Start upgrade")
+        print("%s : Start upgrade" % deviceName)
         startUpgrade()
 
-        print("Testing connectivity to the device...")
+        print("%s Testing connectivity to the device..." % deviceName)
         if not testConnections("$DEVICE_ADDR", "$DEVICE_PORT"):
-            print("Unable to communicate with the device after flashing the image, exiting...")
+            print("%s ERROR : Unable to communicate with the device after flashing the image, exiting..." % deviceName)
             sys.exit()
 
-        print("Testing connectivity to client...")
+        print("%s : Testing connectivity to client..." % deviceName)
         if not testConnections("$PERF_CLIENT", "$PERF_CLIENT_PORT"):
-            print("Unable to communicate with the client after flashing the image, skipping configuration...")
+            print("%s ERROR : Unable to communicate with the client after flashing the image, skipping configuration..." % deviceName)
             continue
 
-        print("Setting device env var...")
-        deviceName = test_image["imgType"] + "_" + test_image["imgVersion"]
+        print("%s : Setting device env var..." % deviceName)
         # This sed replace will replace or insert the TEST_DEVICE environment variable, depending on what type of test we are passing in 
+        # FIXME: for some reason, the .env file within the container is not passed to the contexts called when runtests runs
         setTestDevice = subprocess.run(["sed \'/^TEST_DEVICE=/{h;s/=.*/="+deviceName+"/};${x;/^$/{s//TEST_DEVICE="+deviceName+"/;H};x}\' .env"], shell=True)
+        print(setTestDevice)
 
         # For each json config item, deploy associated image config and call run.sh to execute the tests
-        print("Running test containers...")
-        subprocess.run(['run-tests.sh'], shell=True)
+        print("%s : Running test containers..." % deviceName)
+        subprocess.run(["run-tests.sh "+deviceName], shell=True)
