@@ -18,10 +18,4 @@
     "imgVersion": "19.07.4",
     "configType": "Openwrt",
     "configLocation": "orchestration/default_configs/openwrt-espressobin/*"
-},{
-    "imgLoc": "https://downloads.openwrt.org/releases/18.06.8/targets/mvebu/cortexa53/openwrt-18.06.8-mvebu-cortexa53-globalscale-espressobin-ext4-sdcard.img.gz",
-    "imgType": "OpenWRT-Espressobin",
-    "imgVersion": "18.06.8",
-    "configType": "Openwrt",
-    "configLocation": "orchestration/default_configs/openwrt-espressobin/*"
 }]
