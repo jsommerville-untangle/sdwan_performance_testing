@@ -72,7 +72,7 @@ def startUpgrade():
     """
     startUpgrade will run sysupgrade on the configured device, with the current /tmp/current.img.gz file
     """
-    sysupRun = subprocess.run(["ssh -i id_perf -p $DEVICE_PORT $DEVICE_USER@$DEVICE_ADDR 'sysupgrade /tmp/current.img.gz'"], shell=True)
+    sysupRun = subprocess.run(["ssh -i id_perf -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p $DEVICE_PORT $DEVICE_USER@$DEVICE_ADDR 'sysupgrade /tmp/current.img.gz'"], shell=True)
     print(sysupRun)
 
 def testConnections(device, port):
