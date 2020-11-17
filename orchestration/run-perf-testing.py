@@ -54,7 +54,7 @@ def uploadFiles(imageFile, configs):
     """
     uploadFiles will upload given image and config files to the current deviceIp/User/Pw
     """
-    subImg = subprocess.run(["scp -i id_perf -P $DEVICE_PORT " + imageFile.name + " $DEVICE_USER@$DEVICE_ADDR:/tmp/"], shell=True)
+    subImg = subprocess.run(["scp -i id_perf -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEVICE_PORT " + imageFile.name + " $DEVICE_USER@$DEVICE_ADDR:/tmp/"], shell=True)
     if subImg.returncode != 0:
         return False
 
@@ -62,7 +62,7 @@ def uploadFiles(imageFile, configs):
         # Depending on config type, this may change
         configLocation = "/etc/config/"
 
-        subConfig = subprocess.run(["scp -i id_perf -P $DEVICE_PORT " + config + " $DEVICE_USER@$DEVICE_ADDR:"+configLocation], shell=True)
+        subConfig = subprocess.run(["scp -i id_perf -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEVICE_PORT " + config + " $DEVICE_USER@$DEVICE_ADDR:"+configLocation], shell=True)
         if subConfig.returncode != 0:
             return False
 
@@ -109,7 +109,7 @@ if deviceIp is None or deviceUser is None or devicePort is None:
 
 # Generate keys with ssh-keygen
 print("Generating keys for remote container communication...")
-subprocess.run(['ssh-keygen -q -t ed25519 -N \'\' -f ./id_perf'], shell=True)
+subprocess.run(['ssh-keygen -q -t rsa -N \'\' -f ./id_perf'], shell=True)
 
 # Parse the json configuration files
 print("Parsing supplied config files...")
@@ -146,6 +146,8 @@ with open('orchestration/default_configs/perf-test-espresso-examples.json') as t
             continue
 
         deviceName = test_image["imgType"] + "_" + test_image["imgVersion"]
+        # Assume remote is Untangle-E3
+        remoteType = "Untangle-E3"
 
         print("%s : Locating image file from: %s" % (deviceName, test_image["imgLoc"]))
         # If this is a folder path, we will use the image from that location
@@ -161,8 +163,21 @@ with open('orchestration/default_configs/perf-test-espresso-examples.json') as t
             continue
         print("%s : Current config files: %s" %  (deviceName, current_configs))
 
+        # We need to determine what the current device is running because some functions after this may need to be executed differently (ie: ssh-copy-id with OpenWRT) 
+        print("%s : Determining current image type on the device...")
+        getName = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null grep NAME= /etc/os-release'], shell=True, capture_output=True, text=True)
+
+        if "OpenWrt" in getName.stdout:
+            remoteType = "OpenWRT-Espressobin"
+
         print("%s : Uploading scp keys for orchestrator<-->device communication" % deviceName)
-        keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh-copy-id -i id_perf.pub $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT'], shell=True)
+        if remoteType is "OpenWRT-Espressobin":
+            print("%s : OpenWRT image type detected, using tee to upload key..." % deviceName)
+            keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "tee -a /etc/dropbear/authorized_keys" < id_perf.pub'], shell=True)
+            setKeyPerms = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null chmod 600 /etc/dropbear/authorized_keys'], shell=True)
+
+        else:
+            keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh-copy-id -i id_perf.pub $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'], shell=True)
         if keyUpload.returncode != 0:
             print("%s ERROR: An error occurred during key upload, skipping config" % deviceName)
             continue
@@ -194,3 +209,6 @@ with open('orchestration/default_configs/perf-test-espresso-examples.json') as t
         # For each json config item, deploy associated image config and call run.sh to execute the tests
         print("%s : Running test containers..." % deviceName)
         subprocess.run(["run-tests.sh "+deviceName], shell=True)
+
+
+print("All tests done!")
