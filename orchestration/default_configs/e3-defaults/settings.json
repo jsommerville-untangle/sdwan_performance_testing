@@ -925,10 +925,6 @@
     "accounts": {
         "credentials": [
             {
-                "username": "admin",
-                "passwordHashMD5": "$1$dwZ/UVC2$BgtO.ZpB0a1DP7Y5W/MBu0",
-                "passwordHashSHA512": null,
-                "passwordHashSHA256": null
             }
         ]
     },
