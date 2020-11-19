@@ -25,4 +25,25 @@
     "imgVersion": "19.07.4",
     "configType": "Openwrt",
     "configLocation": "orchestration/default_configs/openwrt-espressobin/*"
+},
+{
+    "imgLoc": "/images/mfw-mvebu-cortexa53-globalscale_espressobin-v7-emmc-ext4-sdcard-packetd-mod.img.gz",
+    "imgType": "Untangle-E3",
+    "imgVersion": "2.1.0-All-Plugins-Disabled",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/testing_configs/e3-disable-all-plugins/*"
+},
+{
+    "imgLoc": "/images/mfw-mvebu-cortexa53-globalscale_espressobin-v7-emmc-ext4-sdcard-packetd-mod.img.gz",
+    "imgType": "Untangle-E3",
+    "imgVersion": "2.1.0-Disable-Traffic-Prediction",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/testing_configs/e3-disable-traff-predict/*"
+},
+{
+    "imgLoc": "/images/mfw-mvebu-cortexa53-globalscale_espressobin-v7-emmc-ext4-sdcard-packetd-mod.img.gz",
+    "imgType": "Untangle-E3",
+    "imgVersion": "2.1.0-Disable-Cert-Plugins",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/testing_configs/e3-disable-cert-plugins/*"
 }]
