@@ -21,7 +21,7 @@ REMOTE_DEVICE_USER=root
 REMOTE_DEVICE_PW=passwd
 
 DEVICE="Unknown"
-
+ORCH_CONFIG=""
 ORCHESTRATOR=""
 
 for arg in "$@"
@@ -101,7 +101,12 @@ do
         ORCHESTRATOR="$2"
         shift
         shift
-        ;;        
+        ;;     
+        -oc|--config)
+        ORCH_CONFIG="$2"
+        shift
+        shift
+        ;;   
     esac
 done
 
@@ -149,6 +154,8 @@ then
     echo DEVICE_USER=$REMOTE_DEVICE_USER>>.env
     echo DEVICE_PW=$REMOTE_DEVICE_PW>>.env
 fi
+
+echo ORCH_CONFIG=$ORCH_CONFIG>>.env
 
 # Let the orchestrator handle python/run script tasks, unless explicitly told not to...
 # If the orchestrator flag is not passed in, then source the env file and call run-tests.sh (Typically used for one off tests)

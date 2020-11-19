@@ -102,9 +102,10 @@ deviceIp = os.environ.get('DEVICE_ADDR')
 deviceUser = os.environ.get('DEVICE_USER')
 devicePw = os.environ.get('DEVICE_PW')
 devicePort = os.environ.get('DEVICE_PORT')
+configJson = os.environ.get('ORCH_CONFIG')
 
-if deviceIp is None or deviceUser is None or devicePort is None:
-    print("Environment Variables are not set properly, DEVICE_ADDR=%s, DEVICE_USER=%s, DEVICE_PW=%s and DEVICE_PORT=%s" % (deviceIp, deviceUser, devicePw, devicePort))
+if deviceIp is None or deviceUser is None or devicePort is None or configJson is None:
+    print("Environment Variables are not set properly, DEVICE_ADDR=%s, DEVICE_USER=%s, DEVICE_PW=%s, DEVICE_PORT=%s and ORCH_CONFIG=%s" % (deviceIp, deviceUser, devicePw, devicePort, configJson))
     sys.exit()
 
 # Generate keys with ssh-keygen
@@ -113,7 +114,7 @@ subprocess.run(['ssh-keygen -q -t rsa -N \'\' -f ./id_perf'], shell=True)
 
 # Parse the json configuration files
 print("Parsing supplied config files...")
-with open('orchestration/default_configs/perf-test-espresso-examples.json') as test_config_file:
+with open(configJson) as test_config_file:
     data = json.load(test_config_file)
 
     print("Found: %s image items in the config file for processing." % len(data))
