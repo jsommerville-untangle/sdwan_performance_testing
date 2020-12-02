@@ -11,4 +11,5 @@ flent qdisc-stats -l 60 -H $PERF_SRV -o qdisc_stats.png
 for f in *.flent.gz
 do
     flent $f >> results.txt
+    flent -f stats $f >> results.txt
 done
