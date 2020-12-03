@@ -1,0 +1,21 @@
+[{
+    "imgLoc": "/images/sdwan-espressobin-ext4_v3.0-0-g27c270a005_20201114T0051.img.gz",
+    "imgType": "Untangle-E3",
+    "imgVersion": "3.0.0",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/default_configs/e3-defaults/*"
+},
+{
+    "imgLoc": "/images/sdwan-espressobin-ext4_v3.0-0-g27c270a005_20201114T0051.img.gz",
+    "imgType": "Untangle-E3-Session-Rules",
+    "imgVersion": "3.0.0",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/testing_configs/e3-session-rules/*"
+},
+{
+    "imgLoc": "/images/sdwan-espressobin-ext4_v3.0-0-g27c270a005_20201114T0051.img.gz",
+    "imgType": "Untangle-E3-Packet-Rules",
+    "imgVersion": "3.0.0",
+    "configType": "Untangle-SDWAN",
+    "configLocation": "orchestration/testing_configs/e3-packet-rules/*"
+}]
