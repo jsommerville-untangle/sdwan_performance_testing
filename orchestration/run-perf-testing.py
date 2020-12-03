@@ -41,32 +41,48 @@ def getImageFile(imageLocation):
 
     return None
 
-def getConfigFiles(configLocation):
+def getFileGlobs(fileLocation):
     """
-    getConfigFiles will get a glob of config files after parsing the configLocation
-    @param string configLocation
+    getFileGlobs will get a glob of config files after parsing the fileLocation
+    @param string fileLocation
     @return glob of files
     """
-    configs = glob.glob(configLocation)
+    configs = glob.glob(fileLocation)
     return configs
 
-def uploadFiles(imageFile, configs):
+def uploadFile(remotePath, localFile):
     """
-    uploadFiles will upload given image and config files to the current deviceIp/User/Pw
+    uploadFile will upload given file to the path specified
     """
-    subImg = subprocess.run(["scp -i id_perf -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEVICE_PORT " + imageFile.name + " $DEVICE_USER@$DEVICE_ADDR:/tmp/"], shell=True)
-    if subImg.returncode != 0:
+    fileUp = subprocess.run(["scp -i id_perf -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEVICE_PORT " + localFile + " $DEVICE_USER@$DEVICE_ADDR:" + remotePath], shell=True)
+    if fileUp.returncode != 0:
         return False
 
-    for config in configs:
-        # Depending on config type, this may change
-        configLocation = "/etc/config/"
-
-        subConfig = subprocess.run(["scp -i id_perf -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P $DEVICE_PORT " + config + " $DEVICE_USER@$DEVICE_ADDR:"+configLocation], shell=True)
-        if subConfig.returncode != 0:
-            return False
-
     return True
+
+def uploadKeys():
+    """
+    uploadKeys will determine the device type and then upload the ssh keys to the appropriate location
+    return: the returncode from the key upload command
+    """
+    # Assume remote is Untangle-E3
+    remoteType = "Untangle-E3"
+    # We need to determine what the current device is running because some functions after this may need to be executed differently (ie: ssh-copy-id with OpenWRT) 
+    print("%s : Determining current image type on the device..." % deviceName)
+    getName = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null grep NAME= /etc/os-release'], shell=True, capture_output=True, text=True)
+
+    if "OpenWrt" in getName.stdout:
+        remoteType = "OpenWRT-Espressobin"
+
+    if remoteType is "OpenWRT-Espressobin":
+            print("%s : OpenWRT image type detected, using tee to upload key..." % deviceName)
+            keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "tee -a /etc/dropbear/authorized_keys" < id_perf.pub'], shell=True)
+            setKeyPerms = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null chmod 600 /etc/dropbear/authorized_keys'], shell=True)
+
+    else:
+        keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh-copy-id -i id_perf.pub $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'], shell=True)
+    
+    return keyUpload.returncode
 
 def startUpgrade():
     """
@@ -147,8 +163,6 @@ with open(configJson) as test_config_file:
             continue
 
         deviceName = test_image["imgType"] + "_" + test_image["imgVersion"]
-        # Assume remote is Untangle-E3
-        remoteType = "Untangle-E3"
 
         print("%s : Locating image file from: %s" % (deviceName, test_image["imgLoc"]))
         # If this is a folder path, we will use the image from that location
@@ -159,34 +173,41 @@ with open(configJson) as test_config_file:
         print("%s : Currently loaded img file MD5: %s" % (deviceName, hashlib.md5(open_file.read()).hexdigest()))
 
         print("%s : Loading config files from: %s" % (deviceName, test_image["configLocation"]))
-        current_configs = getConfigFiles(test_image["configLocation"])
+        current_configs = getFileGlobs(test_image["configLocation"])
         if current_configs is None:
             continue
         print("%s : Current config files: %s" %  (deviceName, current_configs))
-
-        # We need to determine what the current device is running because some functions after this may need to be executed differently (ie: ssh-copy-id with OpenWRT) 
-        print("%s : Determining current image type on the device...")
-        getName = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null grep NAME= /etc/os-release'], shell=True, capture_output=True, text=True)
-
-        if "OpenWrt" in getName.stdout:
-            remoteType = "OpenWRT-Espressobin"
-
-        print("%s : Uploading scp keys for orchestrator<-->device communication" % deviceName)
-        if remoteType is "OpenWRT-Espressobin":
-            print("%s : OpenWRT image type detected, using tee to upload key..." % deviceName)
-            keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "tee -a /etc/dropbear/authorized_keys" < id_perf.pub'], shell=True)
-            setKeyPerms = subprocess.run(['sshpass -p $DEVICE_PW ssh $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null chmod 600 /etc/dropbear/authorized_keys'], shell=True)
-
-        else:
-            keyUpload = subprocess.run(['sshpass -p $DEVICE_PW ssh-copy-id -i id_perf.pub $DEVICE_USER@$DEVICE_ADDR -p $DEVICE_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'], shell=True)
+        
+        keyUpload = uploadKeys()
         if keyUpload.returncode != 0:
             print("%s ERROR: An error occurred during key upload, skipping config" % deviceName)
             continue
 
-        print("%s : Upload image and configs to /tmp on device" % deviceName)
-        if not uploadFiles(open_file, current_configs):
-            print("%s ERROR: An error occurred during image or config upload, skipping test configuration." % deviceName)
+        print("%s : Upload image to /tmp/ on device" % deviceName)
+        if not uploadFile("/tmp/", open_file.name):
+            print("%s ERROR: An error occurred during image upload, skipping test configuration." % deviceName)
             continue
+
+        print("%s : Upload configs to /etc/config on device" % deviceName)
+        for config in current_configs:
+            if not uploadFile("/etc/config/", config):
+                print("%s ERROR: An error occurred during config upload, skipping test configuration." % deviceName)
+                continue
+
+        if "runScripts" in test_image and test_image["runScripts"]:
+            print("%s : Loading script files from: %s" % (deviceName, test_image["runScripts"]))
+            current_scripts = getFileGlobs(test_image["runScripts"])
+            if current_scripts is None:
+                print("%s : runScripts are configured but no scripts are found, skipping test, runScripts: %s" %  (deviceName, test_image["runScripts"]))
+                continue
+
+            print("%s : Current script files: %s" %  (deviceName, current_scripts))
+
+            print("%s : Upload scripts to /etc/config/scripts" % deviceName)
+            for script in current_scripts:
+                if not uploadFile("/etc/config/scripts/", script):
+                    print("%s ERROR: An error occurred during script upload, skipping test configuration." % deviceName)
+                    continue
 
         print("%s : Start upgrade" % deviceName)
         startUpgrade()
@@ -207,6 +228,15 @@ with open(configJson) as test_config_file:
         setTestDevice = subprocess.run(["sed \'/^TEST_DEVICE=/{h;s/=.*/="+deviceName+"/};${x;/^$/{s//TEST_DEVICE="+deviceName+"/;H};x}\' .env"], shell=True)
         print(setTestDevice)
 
+        # We need to update the keys since the image has been updated
+        keyUpload = uploadKeys()
+        if keyUpload.returncode != 0:
+            print("%s ERROR: An error occurred during key upload, skipping config" % deviceName)
+            continue
+
+        # If any device scripts are configured, deploy and run them before we start the testing
+        if "runScripts" in test_image and test_image["runScripts"]:
+            print("%s : Running script files..." % deviceName)
         # For each json config item, deploy associated image config and call run.sh to execute the tests
         print("%s : Running test containers..." % deviceName)
         subprocess.run(["run-tests.sh "+deviceName], shell=True)
